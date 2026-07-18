@@ -1,54 +1,60 @@
 # Modern Server Administrator
 
-> A desktop-class server management tool — multi-process orchestration, real-time dashboard, encrypted updates.
+> A multi-server orchestration platform. Real-time monitoring, encrypted updates, instant startup — packaged as a standalone executable.
 
-[![Stack](https://img.shields.io/badge/stack-Python_%7C_Flask-3776AB?style=flat-square&logo=python)](.)
-[![Platform](https://img.shields.io/badge/platform-Windows_%7C_Linux-lightgrey?style=flat-square)](.)
-[![Lines](https://img.shields.io/badge/core_engine-2%2C300%2B_lines-orange?style=flat-square)](.)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](.)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](.)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5391FE?style=flat-square&logo=powershell&logoColor=white)](.)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](.)
 [![Status](https://img.shields.io/badge/status-Active-success?style=flat-square)](.)
+
+**[→ Live Demo](https://genom-showcase.pages.dev/applications/modern-server/)** · [Portfolio](https://genom-showcase.pages.dev/)
 
 ---
 
 ## What It Is
 
-Modern Server Administrator (MSA) is a production tool for managing multiple local web servers simultaneously — Nginx, PHP, Node, custom processes — from a single interface. It has a real-time web dashboard, an encrypted update delivery system, and remote analytics.
+MSA is a desktop application that manages multiple local web servers from a single Python process. It provides a real-time SSE dashboard, hash-based state caching for instant startup, and encrypted OTA update delivery. Ships as a standalone `.exe` via PyInstaller — no Python install required on the end user's machine.
 
 ---
 
-## What It Solves
+## Core Architecture
 
-Running multiple local dev servers typically means juggling multiple terminal windows, not knowing which crashed, and manually restarting processes. MSA turns that into a single dashboard with live status, process control, real-time logs streamed via SSE, and instant filesystem-based change detection.
+**Flask backend (2,300+ lines)** — single-process multi-server orchestration:
+- Spawns and monitors server processes as subprocesses
+- Streams live stdout/stderr to the web UI via Server-Sent Events
+- Serves the management dashboard as a static SPA
 
----
+**State cache** — directory hash comparison for instant restarts:
 
-## Technical Highlights
+```python
+# save_state_manager.excerpt.py — Hash-Based Cache & Change Detection
+def _calculate_directory_hash(self, directory: str) -> str:
+    hasher = hashlib.sha256()
+    EXCLUDE = {'.git', 'node_modules', '__pycache__', '.data'}
+    for root, dirs, files in os.walk(directory):
+        dirs[:] = sorted(d for d in dirs if d not in EXCLUDE)
+        for fname in sorted(files):
+            fpath = os.path.join(root, fname)
+            stat = os.stat(fpath)
+            entry = f"{os.path.relpath(root, directory)}/{fname}:{stat.st_size}:{stat.st_mtime:.0f}"
+            hasher.update(entry.encode('utf-8', errors='replace'))
+    return hasher.hexdigest()
+```
 
-- **Multi-threaded Flask backend** (2,300+ lines) — orchestrates multiple server processes simultaneously from a single Python process; serves the management UI and the SSE event stream from the same app
-- **Real-time SSE dashboard** — process events (started, crashed, stdout, stderr) streamed to the browser with zero polling
-- **Hash-based save state cache** — `save_state_manager.py` computes a SHA-256 directory hash (paths + sizes + mtimes) and skips full re-scans if nothing changed since last launch; persisted via `pickle` for fast startup
-- **Filesystem observer** — Watchdog threads detect project file changes instantly and trigger hot-reload without manual restart
-- **Encrypted update delivery** — updates are signed and delivered as Fernet-encrypted (AES-128-CBC) payloads; verified via PBKDF2HMAC SHA-256 (100,000 iterations) before being applied
-- **Remote analytics** — Supabase-backed usage monitoring, with local data protected by Fernet encryption before transmission
-
----
-
-## Stack
-
-`Python` · `Flask` · `Watchdog` · `Supabase` · `cryptography (Fernet)` · `PyInstaller`
-
----
-
-## Files In This Repo
-
-- `save_state_manager.excerpt.py` — Hash-based cache & change detection logic (curated snippet)
-- `requirements.txt` — Full dependency list
+**Encrypted update delivery** — Fernet symmetric encryption with PBKDF2HMAC SHA-256 key derivation.
 
 ---
 
-## Screenshots
+## Engineering Highlights
 
-→ [View full app showcase on the portfolio landing page](https://axmohamedsoliman-lgtm.github.io/Genom-framework-profile-landing-page/)
+- **Real-time Watchdog** — filesystem observer threads detect project changes the instant they happen
+- **SHA-256 directory hash cache** — paths + sizes + mtimes hashed; cache hit = zero re-scan on launch
+- **Supabase analytics** — remote usage monitoring with local encryption protecting credentials
+- **PowerShell orchestration** — automated build and deployment scripts manage the full release pipeline
 
 ---
 
-*Full source is private. This repo contains architecture overview and curated implementation snippets.*
+## Skills Demonstrated
+
+`Python` `Flask` `JavaScript` `PowerShell` `Supabase` `AES Encryption` `Filesystem Automation` `Real-Time SSE` `Multi-Process Management` `PyInstaller`
